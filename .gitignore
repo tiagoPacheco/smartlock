@@ -1,0 +1,9 @@
+*.iml
+.gradle
+smartLock/local.properties
+smartLock/.idea/workspace.xml
+smartLock/.idea/libraries
+.DS_Store
+smartLock/build
+smartLock/captures
+.externalNativeBuild
