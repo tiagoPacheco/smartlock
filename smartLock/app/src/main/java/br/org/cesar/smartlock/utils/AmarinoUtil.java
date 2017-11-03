@@ -10,6 +10,8 @@ import android.widget.Toast;
 
 import at.abraxas.amarino.Amarino;
 import at.abraxas.amarino.AmarinoIntent;
+import br.org.cesar.smartlock.LoginActivity;
+import br.org.cesar.smartlock.interfaces.IAmarinoCommand;
 
 /**
  * Created by Tiago on 29/10/2017.
@@ -18,9 +20,11 @@ import at.abraxas.amarino.AmarinoIntent;
 public class AmarinoUtil {
 
     public static final char LoginFlag = 'A';
-    public static final String InvalidName = "InvalidName";
-    public static final String InvalidPassword = "InvalidPassword";
-    public static final String InvalidUserAndPassword = "InvalidUserAndPassword";
+    public static final char SignUpFlag = 'B';
+    public static final String InvalidMac = "InvalidMac";
+    public static final String InvalidUserOrPassword = "InvalidUserOrPassword";
+    public static final String SignUp = "SignUp";
+    public static final String SignIn = "SignIn";
     public static final String Success = "Success";
 
     public static boolean IsConnected = false;
@@ -28,6 +32,8 @@ public class AmarinoUtil {
     public static final String Address = "20:13:01:24:14:05";
     public static String DataReturned = null;
     public static boolean IsDataReceived = false;
+
+    private static ProgressDialog mProgressDialog = null;
 
     public static void registerConnectionReceiver(final Context contextIntent){
         IntentFilter actionsFilter = new IntentFilter();
@@ -54,15 +60,31 @@ public class AmarinoUtil {
         }, actionsFilter);
     }
 
-    public static void connect(final Context contextIntent){
-        Amarino.connect(contextIntent, Address);
-    }
+    public static void sendDataToArduinoWithReturn(final String[] data, final IAmarinoCommand amarinoCommand,
+                                            final Context context, final char flagMethod) {
 
-    public static void disconnect(final Context contextIntent){
-        Amarino.disconnect(contextIntent, Address);
-    }
+        new AsyncTask<Object, Object, String>() {
+            @Override
+            protected void onPreExecute() {
+                mProgressDialog = Utils.createSimpleProgressDialog("Wait", "Processing...", context);
+            }
 
-    public static void sendData(Context context, char flag, String data){
-        Amarino.sendDataToArduino(context, Address, flag, data);
+            @Override
+            protected String doInBackground(Object... params) {
+
+                Amarino.sendDataToArduino(context, Address, flagMethod, data);
+
+                while (!AmarinoUtil.IsDataReceived);
+
+                return AmarinoUtil.DataReturned;
+            }
+
+            @Override
+            protected void onPostExecute(String dataReturned) {
+                AmarinoUtil.IsDataReceived = false;
+                mProgressDialog.dismiss();
+                amarinoCommand.callback(dataReturned);
+            }
+        }.execute();
     }
 }

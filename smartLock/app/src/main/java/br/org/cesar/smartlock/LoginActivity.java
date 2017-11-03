@@ -1,16 +1,22 @@
 package br.org.cesar.smartlock;
 
-import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
-import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.net.NetworkInterface;
+import java.util.Collections;
+import java.util.List;
+
 import at.abraxas.amarino.Amarino;
+import br.org.cesar.smartlock.interfaces.IAmarinoCommand;
 import br.org.cesar.smartlock.utils.AmarinoUtil;
 import br.org.cesar.smartlock.utils.Utils;
 
@@ -19,14 +25,13 @@ public class LoginActivity extends AppCompatActivity {
     private AppCompatButton mBtnLogin;
     private EditText mEditTextUser;
     private EditText mEditTextPassword;
-    private static ProgressDialog mProgressDialog = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_login);
+
         Amarino.connect(LoginActivity.this, AmarinoUtil.Address);
-        //AmarinoUtil.connect(this);
         AmarinoUtil.registerConnectionReceiver(LoginActivity.this);
 
         mBtnLogin = (AppCompatButton) findViewById(R.id.btn_login);
@@ -53,49 +58,31 @@ public class LoginActivity extends AppCompatActivity {
     private void signinOrSignup(){
         String user = mEditTextUser.getText().toString();
         String password = mEditTextPassword.getText().toString();
-        final String[] data = { user, password };
+        String macAddress = Utils.getMac(this);
 
-        new AsyncTask<Object, Object, String>() {
+        final String[] data = { user, password, macAddress };
+
+        AmarinoUtil.sendDataToArduinoWithReturn(data, new IAmarinoCommand(){
             @Override
-            protected void onPreExecute() {
-                mProgressDialog = Utils.createSimpleProgressDialog("Wait", "Authenticating...", LoginActivity.this);
-            }
-
-            @Override
-            protected String doInBackground(Object... params) {
-
-                Amarino.sendDataToArduino(LoginActivity.this, AmarinoUtil.Address, AmarinoUtil.LoginFlag, data);
-
-                while (!AmarinoUtil.IsDataReceived);
-                AmarinoUtil.IsDataReceived = false;
-
-                return AmarinoUtil.DataReturned;
-            }
-
-            @Override
-            protected void onPostExecute(String dataReturned) {
-                mProgressDialog.dismiss();
-
+            public void callback(String dataReturned) {
                 switch (dataReturned){
-                    case AmarinoUtil.InvalidName:
-                        mEditTextUser.setError("Enter a valid user name");
+                    case AmarinoUtil.InvalidUserOrPassword:
+                        Toast.makeText(LoginActivity.this, "Username or password is incorrect", Toast.LENGTH_SHORT).show();
                         break;
-                    case AmarinoUtil.InvalidPassword:
-                        mEditTextPassword.setError("Enter a valid password");
+                    case AmarinoUtil.InvalidMac:
+                        Toast.makeText(LoginActivity.this, "Your device is not authorized", Toast.LENGTH_SHORT).show();
                         break;
-                    case AmarinoUtil.InvalidUserAndPassword:
-                        mEditTextUser.setError("Enter a valid user name");
-                        mEditTextPassword.setError("Enter a valid password");
+                    case AmarinoUtil.SignIn:
+                        Intent intentSmartLock = new Intent(LoginActivity.this, SmartLockActivity.class);
+                        startActivity(intentSmartLock);
                         break;
-                    case AmarinoUtil.Success:
-                        Intent intent = new Intent(LoginActivity.this, SmartLockActivity.class);
-                        startActivity(intent);
-                        finish();
+                    case AmarinoUtil.SignUp:
+                        Intent intentSignUp = new Intent(LoginActivity.this, SignUpActivity.class);
+                        startActivity(intentSignUp);
                         break;
                 }
-
             }
-        }.execute();
+        }, this, AmarinoUtil.LoginFlag);
     }
 
     private boolean validateEntry() {

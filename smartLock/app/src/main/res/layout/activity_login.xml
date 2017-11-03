@@ -21,13 +21,20 @@
         <EditText android:id="@+id/input_user"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textEmailAddress"
+            android:inputType="text"
+            android:drawableLeft="@drawable/user"
+            android:drawablePadding="4dp"
+            android:layout_marginTop="44dp"
+            android:gravity="center_vertical"
             android:hint="User name" />
 
         <EditText android:id="@+id/input_password"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
+            android:drawableLeft="@drawable/password"
+            android:drawablePadding="4dp"
+            android:gravity="center_vertical"
             android:hint="Password"/>
 
         <android.support.v7.widget.AppCompatButton
