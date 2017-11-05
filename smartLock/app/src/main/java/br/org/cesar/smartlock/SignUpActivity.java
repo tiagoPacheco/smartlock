@@ -1,22 +1,15 @@
 package br.org.cesar.smartlock;
 
-import android.content.Context;
 import android.content.Intent;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import at.abraxas.amarino.Amarino;
-import br.org.cesar.smartlock.interfaces.IAmarinoCommand;
 import br.org.cesar.smartlock.utils.AmarinoUtil;
 import br.org.cesar.smartlock.utils.Utils;
-
-import static android.content.Context.*;
 
 public class SignUpActivity extends AppCompatActivity {
 
@@ -54,8 +47,9 @@ public class SignUpActivity extends AppCompatActivity {
         final String[] data = { user, password, macAddress };
 
         Amarino.sendDataToArduino(this, AmarinoUtil.Address, AmarinoUtil.SignUpFlag, data);
+        Utils.isUserLogged = true;
 
-        Intent intent = new Intent(SignUpActivity.this, SmartLockActivity.class);
+        Intent intent = new Intent(SignUpActivity.this, MainActivity.class);
         startActivity(intent);
         finish();
     }

@@ -11,6 +11,7 @@ import android.widget.Toast;
 import at.abraxas.amarino.Amarino;
 import at.abraxas.amarino.AmarinoIntent;
 import br.org.cesar.smartlock.LoginActivity;
+import br.org.cesar.smartlock.MainActivity;
 import br.org.cesar.smartlock.interfaces.IAmarinoCommand;
 
 /**
@@ -19,19 +20,26 @@ import br.org.cesar.smartlock.interfaces.IAmarinoCommand;
 
 public class AmarinoUtil {
 
+    //Flags
     public static final char LoginFlag = 'A';
     public static final char SignUpFlag = 'B';
-    public static final String InvalidMac = "InvalidMac";
-    public static final String InvalidUserOrPassword = "InvalidUserOrPassword";
+    public static final char GetStatusDoorLockFlag = 'C';
+    public static final char DoorLockFlag = 'D';
+
+    //Methods
+    public static final String CommandLock = "Lock";
+    public static final String CommandUnlock = "Unlock";
     public static final String SignUp = "SignUp";
     public static final String SignIn = "SignIn";
-    public static final String Success = "Success";
-
     public static boolean IsConnected = false;
+
+    public static final String Success = "Success";
+    public static final String InvalidMac = "InvalidMac";
+    public static final String InvalidUserOrPassword = "InvalidUserOrPassword";
+    public static final String DoorOpened = "DoorOpened";
 
     public static final String Address = "20:13:01:24:14:05";
     public static String DataReturned = null;
-    public static boolean IsDataReceived = false;
 
     private static ProgressDialog mProgressDialog = null;
 
@@ -54,7 +62,11 @@ public class AmarinoUtil {
                 }
                 else if(AmarinoIntent.ACTION_RECEIVED.equals(intent.getAction())){
                     DataReturned = intent.getStringExtra(AmarinoIntent.EXTRA_DATA);
-                    IsDataReceived = true;
+
+                    if(DataReturned.equals(DoorOpened)){
+                        Class activityClass = Utils.isUserLogged ? MainActivity.class : LoginActivity.class;
+                        Utils.createSimpleNotification(context, "Smart Lock", "The door was opened", activityClass);
+                    }
                 }
             }
         }, actionsFilter);
@@ -74,14 +86,48 @@ public class AmarinoUtil {
 
                 Amarino.sendDataToArduino(context, Address, flagMethod, data);
 
-                while (!AmarinoUtil.IsDataReceived);
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
 
                 return AmarinoUtil.DataReturned;
             }
 
             @Override
             protected void onPostExecute(String dataReturned) {
-                AmarinoUtil.IsDataReceived = false;
+                mProgressDialog.dismiss();
+                amarinoCommand.callback(dataReturned);
+            }
+        }.execute();
+    }
+
+    public static void getDataToArduino(final IAmarinoCommand amarinoCommand,
+                                       final Context context, final char flagMethod) {
+
+        new AsyncTask<Object, Object, String>() {
+            @Override
+            protected void onPreExecute() {
+                mProgressDialog = Utils.createSimpleProgressDialog("Wait", "Processing...", context);
+            }
+
+            @Override
+            protected String doInBackground(Object... params) {
+
+                Amarino.sendDataToArduino(context, Address, flagMethod, ' ');
+
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                return AmarinoUtil.DataReturned;
+            }
+
+            @Override
+            protected void onPostExecute(String dataReturned) {
                 mProgressDialog.dismiss();
                 amarinoCommand.callback(dataReturned);
             }

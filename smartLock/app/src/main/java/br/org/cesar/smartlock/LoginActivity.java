@@ -1,19 +1,12 @@
 package br.org.cesar.smartlock;
 
-import android.content.Context;
 import android.content.Intent;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.AppCompatButton;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
-
-import java.net.NetworkInterface;
-import java.util.Collections;
-import java.util.List;
 
 import at.abraxas.amarino.Amarino;
 import br.org.cesar.smartlock.interfaces.IAmarinoCommand;
@@ -23,6 +16,7 @@ import br.org.cesar.smartlock.utils.Utils;
 public class LoginActivity extends AppCompatActivity {
 
     private AppCompatButton mBtnLogin;
+    private AppCompatButton mBtnConnect;
     private EditText mEditTextUser;
     private EditText mEditTextPassword;
 
@@ -35,8 +29,10 @@ public class LoginActivity extends AppCompatActivity {
         AmarinoUtil.registerConnectionReceiver(LoginActivity.this);
 
         mBtnLogin = (AppCompatButton) findViewById(R.id.btn_login);
+        mBtnConnect = (AppCompatButton) findViewById(R.id.btn_connect);
         mEditTextUser = (EditText) findViewById(R.id.input_user);
         mEditTextPassword = (EditText) findViewById(R.id.input_password);
+        Utils.isUserLogged = false;
 
         mBtnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -51,6 +47,13 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 signinOrSignup();
+            }
+        });
+
+        mBtnConnect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Amarino.connect(LoginActivity.this, AmarinoUtil.Address);
             }
         });
     }
@@ -73,7 +76,8 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(LoginActivity.this, "Your device is not authorized", Toast.LENGTH_SHORT).show();
                         break;
                     case AmarinoUtil.SignIn:
-                        Intent intentSmartLock = new Intent(LoginActivity.this, SmartLockActivity.class);
+                        Utils.isUserLogged = true;
+                        Intent intentSmartLock = new Intent(LoginActivity.this, MainActivity.class);
                         startActivity(intentSmartLock);
                         break;
                     case AmarinoUtil.SignUp:

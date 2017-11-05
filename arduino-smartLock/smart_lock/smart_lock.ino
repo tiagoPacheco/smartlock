@@ -15,12 +15,13 @@ MeetAndroid meetAndroid;
 IRrecv irrecv(recv_pin);
 Servo myservo;
 
-String masterUser;
-String masterPassword;
+String masterUser = "adm";
+String masterPassword = "123";
 String masterMacAddress;
 
 int pos = 0;
 bool isNotificationSended = false;
+bool isLocked = false;
 
 void setup() {
   Serial.begin(9600);
@@ -36,6 +37,9 @@ void setup() {
   
   meetAndroid.registerFunction(authenticate, 'A');
   meetAndroid.registerFunction(signup, 'B');
+  meetAndroid.registerFunction(getStatusDoorLockFlag, 'C');
+  meetAndroid.registerFunction(lockDoor, 'D');
+  isLocked = true;
 }
 
 void loop() {  
@@ -58,7 +62,36 @@ String split(String data, char separator, int index)
     }
   }
 
-  return found>index ? data.substring(strIndex[0], strIndex[1]) : "";
+  return found>  index ? data.substring(strIndex[0], strIndex[1]) : "";
+}
+
+void getStatusDoorLockFlag(byte flag, byte numOfValues){
+  String returnStatus = isLocked ? "T" : "F";
+  
+  char charReturnStatus[2];
+  returnStatus.toCharArray(charReturnStatus, 2);
+  
+  meetAndroid.send(charReturnStatus);
+}
+
+void lockDoor(byte flag, byte numOfValues){
+  int length = meetAndroid.stringLength();
+  char data[length];
+  meetAndroid.getString(data);
+  String dataString = String(data);
+  
+  if(dataString == "Lock"){
+    closeLock();
+  }
+  else{
+    openLock();
+  }  
+
+  String returnStatus = "Success";
+  char charReturnStatus[25];
+  returnStatus.toCharArray(charReturnStatus, 25);
+
+  meetAndroid.send(charReturnStatus);
 }
 
 void signup(byte flag, byte numOfValues){
@@ -106,6 +139,7 @@ void authenticate(byte flag, byte numOfValues){
 
 void openLock(){
   myservo.write(180);
+  isLocked = true;
   analogWrite(red, 0);
   analogWrite(blue, 0);
   analogWrite(green, 255);
@@ -113,6 +147,7 @@ void openLock(){
 
 void closeLock(){
   myservo.write(90);
+  isLocked = false;
   analogWrite(red, 0);
   analogWrite(blue, 255);
   analogWrite(green, 0);
@@ -120,7 +155,9 @@ void closeLock(){
 
 void sendNotificationOpenDoor(){
   if(!isNotificationSended){
-    //sendNotification
+    char message[10];
+    message[10] = "DoorOpened";
+    meetAndroid.send(message);
   }
   analogWrite(red, 255);
   analogWrite(blue, 255);
