@@ -19,7 +19,6 @@ String masterUser = "adm";
 String masterPassword = "123";
 String masterMacAddress;
 
-int pos = 0;
 bool isNotificationSended = false;
 bool isLocked = false;
 
@@ -39,7 +38,7 @@ void setup() {
   meetAndroid.registerFunction(signup, 'B');
   meetAndroid.registerFunction(getStatusDoorLockFlag, 'C');
   meetAndroid.registerFunction(lockDoor, 'D');
-  isLocked = true;
+  closeLock();
 }
 
 void loop() {  
@@ -106,7 +105,7 @@ void signup(byte flag, byte numOfValues){
 }
 
 void authenticate(byte flag, byte numOfValues){
-    
+    analogWrite(blue, 155);
     int length = meetAndroid.stringLength();
     char data[length];
     meetAndroid.getString(data);
@@ -138,19 +137,19 @@ void authenticate(byte flag, byte numOfValues){
 }
 
 void openLock(){
-  myservo.write(180);
-  isLocked = true;
-  analogWrite(red, 0);
-  analogWrite(blue, 0);
-  analogWrite(green, 255);
-}
-
-void closeLock(){
-  myservo.write(90);
+  myservo.write(18);
   isLocked = false;
   analogWrite(red, 0);
   analogWrite(blue, 255);
   analogWrite(green, 0);
+}
+
+void closeLock(){
+  myservo.write(0);
+  isLocked = true;
+  analogWrite(red, 0);
+  analogWrite(blue, 0);
+  analogWrite(green, 255);  
 }
 
 void sendNotificationOpenDoor(){
