@@ -65,7 +65,14 @@ String split(String data, char separator, int index)
 }
 
 void getStatusDoorLockFlag(byte flag, byte numOfValues){
-  String returnStatus = isLocked ? "T" : "F";
+  String returnStatus;
+  
+  if(isLocked){
+    returnStatus = "T";
+  }
+  else{
+    returnStatus = "F";
+  }
   
   char charReturnStatus[2];
   returnStatus.toCharArray(charReturnStatus, 2);
@@ -137,19 +144,19 @@ void authenticate(byte flag, byte numOfValues){
 }
 
 void openLock(){
-  myservo.write(18);
+  myservo.write(149);
   isLocked = false;
   analogWrite(red, 0);
-  analogWrite(blue, 255);
-  analogWrite(green, 0);
+  analogWrite(blue, 0);
+  analogWrite(green, 255);
 }
 
 void closeLock(){
-  myservo.write(0);
+  myservo.write(162);
   isLocked = true;
-  analogWrite(red, 0);
+  analogWrite(red, 255);
   analogWrite(blue, 0);
-  analogWrite(green, 255);  
+  analogWrite(green, 0);  
 }
 
 void sendNotificationOpenDoor(){

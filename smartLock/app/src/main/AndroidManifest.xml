@@ -32,6 +32,8 @@
             android:theme="@style/Theme.AppCompat.NoActionBar"
             android:screenOrientation="portrait"/>
 
+        <receiver android:name=".utils.NotificationPublisher" />
+
     </application>
 
 </manifest>

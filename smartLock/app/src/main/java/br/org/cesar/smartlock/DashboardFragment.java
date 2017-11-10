@@ -84,12 +84,12 @@ public class DashboardFragment extends Fragment {
         if(isLocked){
             mBtnLockUnlock.setImageResource(R.drawable.unlock);
             mBtnLockUnlock.setColor(getResources().getColor(R.color.green));
-            command = AmarinoUtil.CommandUnlock;
+            command = AmarinoUtil.CommandLock;
         }
         else{
             mBtnLockUnlock.setImageResource(R.drawable.lock);
             mBtnLockUnlock.setColor(getResources().getColor(R.color.red));
-            command = AmarinoUtil.CommandLock;
+            command = AmarinoUtil.CommandUnlock;
         }
         return command;
     }
@@ -105,8 +105,6 @@ public class DashboardFragment extends Fragment {
         super.onAttach(context);
         if (context instanceof OnFragmentInteractionListener) {
             mListener = (OnFragmentInteractionListener) context;
-        } else {
-            Toast.makeText(context, "Dashboard Fragment Attached", Toast.LENGTH_SHORT).show();
         }
     }
 

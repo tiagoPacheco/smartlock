@@ -25,6 +25,8 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+//        Utils.scheduleNotification(this, 5000, 0, "Title", "Text", MainActivity.class);
+
         Amarino.connect(LoginActivity.this, AmarinoUtil.Address);
         AmarinoUtil.registerConnectionReceiver(LoginActivity.this);
 
@@ -83,6 +85,9 @@ public class LoginActivity extends AppCompatActivity {
                     case AmarinoUtil.SignUp:
                         Intent intentSignUp = new Intent(LoginActivity.this, SignUpActivity.class);
                         startActivity(intentSignUp);
+                        break;
+                    default:
+                        Toast.makeText(LoginActivity.this, "Something went wrong", Toast.LENGTH_SHORT).show();
                         break;
                 }
             }
