@@ -13,7 +13,9 @@ import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.TaskStackBuilder;
 
+import br.org.cesar.smartlock.MainActivity;
 import br.org.cesar.smartlock.R;
+import br.org.cesar.smartlock.interfaces.IAmarinoCommand;
 
 import static android.content.Context.WIFI_SERVICE;
 
@@ -54,49 +56,31 @@ public class Utils {
         notificationManager.notify(sNOTIFICATION_ID, builder.build());
     }
 
-//    public static void scheduleNotification(int delay, Context context) {
-//
-//        Notification.Builder builder = new Notification.Builder(context);
-//        builder.setContentTitle("Scheduled Notification");
-//        builder.setContentText("Test");
-//        builder.setSmallIcon(R.mipmap.ic_lock);
-//        Notification notification = builder.build();
-//
-//        Intent notificationIntent = new Intent(context, NotificationPublisher.class);
-//        notificationIntent.putExtra(NotificationPublisher.NOTIFICATION_ID, 1);
-//        notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, notification);
-//        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-//
-//        long futureInMillis = SystemClock.elapsedRealtime() + delay;
-//        AlarmManager alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-//        alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, futureInMillis, pendingIntent);
-//    }
-
-    public static void scheduleNotification(Context context, long delay, int notificationId,
-                                     String title, String content, Class activityClass) {
-                NotificationCompat.Builder builder = new NotificationCompat.Builder(context)
-                .setSmallIcon(R.mipmap.ic_lock)
-                .setContentTitle(title)
-                .setContentText(content);
-        Intent resultIntent = new Intent(context, activityClass);
-
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addParentStack(activityClass);
-        stackBuilder.addNextIntent(resultIntent);
-
-        Intent intent = new Intent(context, activityClass);
-        PendingIntent activity = PendingIntent.getActivity(context, notificationId, intent, PendingIntent.FLAG_CANCEL_CURRENT);
-        builder.setContentIntent(activity);
-
-        Notification notification = builder.build();
+    public static void scheduleNotification(Context context, long delay, int notificationId) {
 
         Intent notificationIntent = new Intent(context, NotificationPublisher.class);
         notificationIntent.putExtra(NotificationPublisher.NOTIFICATION_ID, notificationId);
-        notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, notification);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, notificationId, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, notificationId, notificationIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT);
 
         long futureInMillis = SystemClock.elapsedRealtime() + delay;
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, futureInMillis, pendingIntent);
+    }
+
+    public static void verifyStatusDoorLock(final Context context){
+
+        if(!AmarinoUtil.IsConnected) return;
+        AmarinoUtil.getDataToArduino(new IAmarinoCommand(){
+            @Override
+            public void callback(String dataReturned) {
+                boolean isLocked = dataReturned.equals("T") ? true : false;
+
+                if(isLocked){
+                    createSimpleNotification(context, "Smart Lock", "Your door is not locked", MainActivity.class);
+                }
+
+            }
+        }, context, AmarinoUtil.GetStatusDoorLockFlag);
     }
 }

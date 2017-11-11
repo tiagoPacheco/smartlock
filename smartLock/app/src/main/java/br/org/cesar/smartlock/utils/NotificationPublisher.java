@@ -6,6 +6,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import br.org.cesar.smartlock.MainActivity;
+
 /**
  * Created by Tiago on 09/11/2017.
  */
@@ -16,11 +18,7 @@ public class NotificationPublisher extends BroadcastReceiver {
     public static String NOTIFICATION = "notification";
 
     public void onReceive(Context context, Intent intent) {
-
-        NotificationManager notificationManager = (NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-        Notification notification = intent.getParcelableExtra(NOTIFICATION);
-        int id = intent.getIntExtra(NOTIFICATION_ID, 0);
-        notificationManager.notify(id, notification);
+        Utils.verifyStatusDoorLock(context);
+        Utils.scheduleNotification(context, 100000, 0);
     }
 }

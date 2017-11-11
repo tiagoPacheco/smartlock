@@ -1,18 +1,14 @@
 #include <Servo.h>
-#include <IRremote.h>
-#include <IRremoteInt.h>
 #include <MeetAndroid.h>
 
-#define recv_pin 2
-#define emmiter_pin 3
 #define red 5
 #define blue 6
 #define green 9
 #define trig 11
 #define echo 12
+#define photodiode 13
 
 MeetAndroid meetAndroid;
-IRrecv irrecv(recv_pin);
 Servo myservo;
 
 String masterUser = "adm";
@@ -24,7 +20,6 @@ bool isLocked = false;
 
 void setup() {
   Serial.begin(9600);
-  irrecv.enableIRIn();
   myservo.attach(4);
   pinMode(red, OUTPUT);
   pinMode(blue, OUTPUT);
@@ -43,7 +38,7 @@ void setup() {
 
 void loop() {  
   meetAndroid.receive();
-  //checkDoorOpen();
+  checkDoorOpen();
   delay(500);
 }
 
@@ -85,7 +80,7 @@ void lockDoor(byte flag, byte numOfValues){
   char data[length];
   meetAndroid.getString(data);
   String dataString = String(data);
-  
+     
   if(dataString == "Lock"){
     closeLock();
   }
@@ -93,7 +88,16 @@ void lockDoor(byte flag, byte numOfValues){
     openLock();
   }  
 
+  delay(200);
+
+  int photodiodeStatus = digitalRead(photodiode);
   String returnStatus = "Success";
+
+  if(dataString == "Lock" && photodiodeStatus == 0 
+  || dataString == "Unlock" && photodiodeStatus == 1){
+    returnStatus = "ErrorCloseDoor"; 
+  }
+  
   char charReturnStatus[25];
   returnStatus.toCharArray(charReturnStatus, 25);
 
@@ -111,8 +115,7 @@ void signup(byte flag, byte numOfValues){
     masterMacAddress  = split(String(data), ';', 2 );
 }
 
-void authenticate(byte flag, byte numOfValues){
-    analogWrite(blue, 155);
+void authenticate(byte flag, byte numOfValues){    
     int length = meetAndroid.stringLength();
     char data[length];
     meetAndroid.getString(data);
@@ -145,25 +148,22 @@ void authenticate(byte flag, byte numOfValues){
 
 void openLock(){
   myservo.write(149);
-  isLocked = false;
-  analogWrite(red, 0);
-  analogWrite(blue, 0);
-  analogWrite(green, 255);
+  isLocked = false;  
+  turnOnLedGreen();
 }
 
 void closeLock(){
-  myservo.write(162);
+  myservo.write(163);
   isLocked = true;
-  analogWrite(red, 255);
-  analogWrite(blue, 0);
-  analogWrite(green, 0);  
+  turnOnLedRed();
 }
 
 void sendNotificationOpenDoor(){
   if(!isNotificationSended){
-    char message[10];
-    message[10] = "DoorOpened";
-    meetAndroid.send(message);
+    String message = "DoorOpened";
+    char messageChar[11];
+    message.toCharArray(messageChar, 11);
+    meetAndroid.send(messageChar);
   }
   analogWrite(red, 255);
   analogWrite(blue, 255);
@@ -176,15 +176,31 @@ void checkDoorOpen(){
   delayMicroseconds(10);
   digitalWrite(trig, LOW);
   float distancia = pulseIn(echo, HIGH);
-  Serial.println(distancia);
-  if(distancia > 290){
+  if(distancia > 450){
     sendNotificationOpenDoor();
   }
   else{
-    turnOffLed();
+    if(isLocked){
+      turnOnLedRed();
+    }
+    else{
+      turnOnLedGreen();
+    }
     isNotificationSended = false;
   }
   delay(500);
+}
+
+void turnOnLedRed(){
+  analogWrite(red, 255);
+  analogWrite(blue, 0);
+  analogWrite(green, 0);  
+}
+
+void turnOnLedGreen(){
+  analogWrite(red, 0);
+  analogWrite(blue, 0);
+  analogWrite(green, 255);
 }
 
 void turnOffLed(){

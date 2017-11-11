@@ -61,7 +61,6 @@ public class DashboardFragment extends Fragment {
 
                 String[] data = {command};
 
-                Amarino.sendDataToArduino(DashboardFragment.this.getActivity(), AmarinoUtil.Address, AmarinoUtil.DoorLockFlag, data);
                 AmarinoUtil.sendDataToArduinoWithReturn(data, new IAmarinoCommand() {
                     @Override
                     public void callback(String dataReturned) {
